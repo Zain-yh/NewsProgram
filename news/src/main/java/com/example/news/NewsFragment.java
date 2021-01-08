@@ -8,6 +8,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 import androidx.annotation.NonNull;
@@ -21,6 +22,10 @@ import com.example.news.base.LazyFragment;
 import com.example.news.bean.AllNews;
 import com.example.news.bean.NewsBean;
 import com.example.news.inter.NewsApiInterface;
+import com.scwang.smartrefresh.layout.SmartRefreshLayout;
+import com.scwang.smartrefresh.layout.api.RefreshLayout;
+import com.scwang.smartrefresh.layout.listener.OnLoadMoreListener;
+import com.scwang.smartrefresh.layout.listener.OnRefreshListener;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -33,6 +38,8 @@ public class NewsFragment extends LazyFragment {
     private RecyclerView recyclerView;
     private NewsListAdapter newsListAdapter;
     private List<NewsBean> newsList;
+    private SmartRefreshLayout refreshLayout;
+    private int page = 1;
 
     //由于fragment不能自定义构造函数，使用bundle传值
     public static NewsFragment getInstance(String channel){
@@ -52,10 +59,26 @@ public class NewsFragment extends LazyFragment {
         Bundle bundle = getArguments();
         mChannel = bundle.getString(CHANNEL_NAME);
         recyclerView = view.findViewById(R.id.recycler);
+
         newsListAdapter = new NewsListAdapter(getContext());
         LinearLayoutManager manager = new LinearLayoutManager(getContext());
         manager.setOrientation(RecyclerView.VERTICAL);
         recyclerView.setLayoutManager(manager);
+        recyclerView.setAdapter(newsListAdapter);
+
+        refreshLayout = view.findViewById(R.id.refreshlayout);
+        refreshLayout.setOnRefreshListener(new OnRefreshListener() {
+            @Override
+            public void onRefresh(@NonNull RefreshLayout refreshLayout) {
+                lazyInit();
+            }
+        });
+        refreshLayout.setOnLoadMoreListener(new OnLoadMoreListener() {
+            @Override
+            public void onLoadMore(@NonNull RefreshLayout refreshLayout) {
+                loadMore();
+            }
+        });
         return view;
     }
 
@@ -63,19 +86,43 @@ public class NewsFragment extends LazyFragment {
     @Override
     public void lazyInit() {
         NewsApiInterface newsApiInterface = MyNetworkApi.getService(NewsApiInterface.class);
-        newsApiInterface.getAllNews(mChannel, 10, MyNetworkApi.key)
+        newsApiInterface.getAllNews(mChannel, 0, 20, MyNetworkApi.key)
                 .compose(MyNetworkApi.getInstance().applySchedulers(new BaseObserver<AllNews>() {
                     @Override
                     protected void onSuccess(AllNews allNews) {
                         newsList = allNews.getResult().getList();
-                        recyclerView.setAdapter(newsListAdapter);
                         newsListAdapter.setData(newsList);
+                        refreshLayout.finishRefresh(true);
+                        page = 1;
                     }
 
                     @Override
                     protected void onFailure(String message) {
                         Toast.makeText(getContext(), message, Toast.LENGTH_LONG).show();
                         Log.d(TAG, "onFailure: "+ message);
+                        refreshLayout.finishRefresh(true);
+                    }
+                }));
+    }
+
+    @SuppressLint("CheckResult")
+    private void loadMore(){
+        ((NewsApiInterface)MyNetworkApi.getService(NewsApiInterface.class))
+                .getAllNews(mChannel, page*20, 20, MyNetworkApi.key)
+                .compose(MyNetworkApi.getInstance().applySchedulers(new BaseObserver<AllNews>() {
+                    @Override
+                    protected void onSuccess(AllNews allNews) {
+                        newsList.addAll(allNews.getResult().getList());
+                        newsListAdapter.setData(newsList);
+                        page++;
+                        refreshLayout.finishLoadMore(true);
+                    }
+
+                    @Override
+                    protected void onFailure(String message) {
+                        Toast.makeText(getContext(), message, Toast.LENGTH_LONG).show();
+                        Log.d(TAG, "onFailure: "+ message);
+                        refreshLayout.finishLoadMore(false);
                     }
                 }));
     }

@@ -11,6 +11,7 @@ public interface NewsApiInterface {
 
     @GET("get")
     Observable<AllNews> getAllNews(@Query("channel") String channel,
+                                   @Query("start") int start,
                                    @Query("num") int num,
                                    @Query("appkey") String appkey);
 
