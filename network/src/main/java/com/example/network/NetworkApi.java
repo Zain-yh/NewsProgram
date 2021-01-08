@@ -51,6 +51,7 @@ public abstract class NetworkApi {
         return okHttpClient;
     }
 
+    //used for compose ObservableTransformer
     public <T> ObservableTransformer<T, T> applySchedulers(final Observer<T> observer){
         return new ObservableTransformer<T, T>() {
             @Override

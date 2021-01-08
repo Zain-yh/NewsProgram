@@ -1,5 +1,6 @@
 package com.example.news;
 
+import android.annotation.SuppressLint;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
@@ -11,8 +12,12 @@ import androidx.viewpager.widget.ViewPager;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.RelativeLayout;
 
-import com.example.news.base.LazyFragment;
+import com.example.network.BaseObserver;
+import com.example.network.MyNetworkApi;
+import com.example.news.bean.Channels;
+import com.example.news.inter.NewsApiInterface;
 import com.google.android.material.tabs.TabLayout;
 
 import java.util.ArrayList;
@@ -25,61 +30,77 @@ public class HomeFragment extends Fragment {
             "娱乐", "军事", "教育", "科技", "NBA", "股票", "星座", "女性", "健康", "育儿"};
     List<String> tabList = new ArrayList<>();
     List<Fragment> fragments = new ArrayList<>();
+    private ViewPager viewPager;
+    private TabLayout tabLayout;
+    private RelativeLayout loadingView;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         View view =  inflater.inflate(R.layout.fragment_home, container, false);
-        TabLayout tabLayout = view.findViewById(R.id.tablayout);
-        ViewPager viewPager = view.findViewById(R.id.viewpager);
+        initView(view);
+//        loadTab();
+        return view;
+    }
+
+    @SuppressLint("CheckResult")
+    private void loadTab() {
+        ((NewsApiInterface)MyNetworkApi.getService(NewsFragment.class))
+                .getChannels(MyNetworkApi.key)
+                .compose(MyNetworkApi.getInstance().applySchedulers(new BaseObserver<Channels>() {
+                    @Override
+                    protected void onSuccess(Channels channels) {
+                        tabList.clear();
+                        tabList.addAll(channels.getChannels());
+                    }
+
+                    @Override
+                    protected void onFailure(String message) {
+
+                    }
+                }));
+    }
+
+    private void initView(View view) {
+        tabLayout = view.findViewById(R.id.tablayout);
+        viewPager = view.findViewById(R.id.viewpager);
         tabList.addAll(Arrays.asList(tabs));
         for (String s : tabList) {
             tabLayout.addTab(tabLayout.newTab().setText(s));
+            NewsFragment newsFragment = NewsFragment.getInstance(s);
+            fragments.add(newsFragment);
         }
 
-        NewsFragment newsFragment = NewsFragment.getInstance("头条");
-
         FragmentManager fm = getActivity().getSupportFragmentManager();
-
         NewsFragmentAdapter fragmentAdapter = new NewsFragmentAdapter(fm, FragmentPagerAdapter.BEHAVIOR_RESUME_ONLY_CURRENT_FRAGMENT);
-        fragments.add(newsFragment);
         fragmentAdapter.setData(fragments);
         viewPager.setAdapter(fragmentAdapter);
+        viewPager.setOffscreenPageLimit(0);
         tabLayout.addOnTabSelectedListener(new TabLayout.BaseOnTabSelectedListener() {
             @Override
             public void onTabSelected(TabLayout.Tab tab) {
-
+                viewPager.setCurrentItem(tab.getPosition());
             }
-
             @Override
             public void onTabUnselected(TabLayout.Tab tab) {
-
             }
-
             @Override
             public void onTabReselected(TabLayout.Tab tab) {
-
             }
         });
-
         viewPager.addOnPageChangeListener(new ViewPager.OnPageChangeListener() {
             @Override
             public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
-
             }
 
             @Override
             public void onPageSelected(int position) {
-
+                tabLayout.getTabAt(position).select();
             }
-
             @Override
             public void onPageScrollStateChanged(int state) {
-
             }
         });
-
-        return view;
     }
 
     class NewsFragmentAdapter extends FragmentPagerAdapter{
@@ -103,6 +124,11 @@ public class HomeFragment extends Fragment {
         @Override
         public int getCount() {
             return fragments == null ? 0 : fragments.size();
+        }
+
+        @Override
+        public void destroyItem(@NonNull ViewGroup container, int position, @NonNull Object object) {
+
         }
     }
 }

@@ -1,4 +1,4 @@
-package com.example.news;
+package com.example.news.inter;
 
 import com.example.news.bean.AllNews;
 import com.example.news.bean.Channels;

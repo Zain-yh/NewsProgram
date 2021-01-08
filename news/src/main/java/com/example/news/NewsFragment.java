@@ -2,7 +2,6 @@ package com.example.news;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
-import android.media.Image;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -11,21 +10,17 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
-
-import androidx.annotation.MainThread;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
-
 import com.bumptech.glide.Glide;
 import com.example.network.BaseObserver;
 import com.example.network.MyNetworkApi;
-import com.example.network.NetworkApi;
 import com.example.news.base.LazyFragment;
 import com.example.news.bean.AllNews;
 import com.example.news.bean.NewsBean;
+import com.example.news.inter.NewsApiInterface;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -38,7 +33,6 @@ public class NewsFragment extends LazyFragment {
     private RecyclerView recyclerView;
     private NewsListAdapter newsListAdapter;
     private List<NewsBean> newsList;
-    private String TAG = getClass().getSimpleName();
 
     //由于fragment不能自定义构造函数，使用bundle传值
     public static NewsFragment getInstance(String channel){
@@ -46,6 +40,7 @@ public class NewsFragment extends LazyFragment {
         Bundle bundle = new Bundle();
         bundle.putString(CHANNEL_NAME, channel);
         newsFragment.setArguments(bundle);
+        newsFragment.setTAG(channel);
         return newsFragment;
     }
 
@@ -136,4 +131,5 @@ public class NewsFragment extends LazyFragment {
             }
         }
     }
+
 }
