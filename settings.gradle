@@ -1,0 +1,4 @@
+include ':news'
+include ':network'
+include ':app'
+rootProject.name = "LazyFragment"
