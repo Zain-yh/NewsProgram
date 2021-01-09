@@ -1,6 +1,7 @@
 // Top-level build file where you can add configuration options common to all sub-projects/modules.
 buildscript {
     repositories {
+//        http://maven.aliyun.com/nexus/content/groups/public/
         google()
         jcenter()
     }
@@ -14,6 +15,7 @@ buildscript {
 
 allprojects {
     repositories {
+//        http://maven.aliyun.com/nexus/content/groups/public/
         google()
         jcenter()
     }
@@ -21,4 +23,14 @@ allprojects {
 
 task clean(type: Delete) {
     delete rootProject.buildDir
+}
+
+ext {
+    minSdkVersion = 21
+    targetSdkVersion = 30
+    androidXVersion = '1.0.0'
+    compileSdkVersion = 30
+    buildToolsVersion = '30.0.2'
+    constraint_version = '1.0.0'
+
 }

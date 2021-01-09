@@ -1,4 +1,6 @@
-apply plugin: 'com.android.library'
+plugins {
+    id 'com.android.library'
+}
 
 android {
     compileSdkVersion rootProject.compileSdkVersion
@@ -11,6 +13,7 @@ android {
         versionName "1.0"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        consumerProguardFiles "consumer-rules.pro"
     }
 
     buildTypes {
@@ -19,20 +22,17 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
-
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
     dataBinding{
         enabled(true)
     }
 }
 
 dependencies {
-    implementation fileTree(dir: "libs", include: ["*.jar"])
+
     implementation 'androidx.appcompat:appcompat:1.2.0'
-
-    implementation "com.google.android.material:material:1.0.0"
-
-    implementation 'com.scwang.smartrefresh:SmartRefreshLayout:1.1.0-alpha-7'
-    implementation 'com.scwang.smartrefresh:SmartRefreshHeader:1.1.0-alpha-7'//没有使用特殊Header，可以不加这行
-    api project(':network')
-    implementation project(":common")
+    implementation 'com.google.android.material:material:1.2.1'
 }

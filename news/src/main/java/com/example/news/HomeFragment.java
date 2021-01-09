@@ -2,27 +2,25 @@ package com.example.news;
 
 import android.annotation.SuppressLint;
 import android.os.Bundle;
-
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentPagerAdapter;
 import androidx.viewpager.widget.ViewPager;
-
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.RelativeLayout;
-
 import com.example.network.BaseObserver;
 import com.example.network.MyNetworkApi;
 import com.example.news.bean.Channels;
 import com.example.news.inter.NewsApiInterface;
+import com.example.news.newslist.NewsFragment;
 import com.google.android.material.tabs.TabLayout;
-
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class HomeFragment extends Fragment {
 
@@ -32,7 +30,7 @@ public class HomeFragment extends Fragment {
     List<Fragment> fragments = new ArrayList<>();
     private ViewPager viewPager;
     private TabLayout tabLayout;
-    private RelativeLayout loadingView;
+    private Map<String, Fragment> fragmentMap = new HashMap<>();
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -76,7 +74,7 @@ public class HomeFragment extends Fragment {
         fragmentAdapter.setData(fragments);
         viewPager.setAdapter(fragmentAdapter);
         viewPager.setOffscreenPageLimit(0);
-        tabLayout.addOnTabSelectedListener(new TabLayout.BaseOnTabSelectedListener() {
+        tabLayout.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
             @Override
             public void onTabSelected(TabLayout.Tab tab) {
                 viewPager.setCurrentItem(tab.getPosition());

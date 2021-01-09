@@ -13,6 +13,7 @@ import android.util.Log;
 import android.view.View;
 import android.widget.FrameLayout;
 
+import com.example.lazyfragment.databinding.ActivityMainBinding;
 import com.example.news.HomeFragment;
 import com.google.android.material.tabs.TabLayout;
 
