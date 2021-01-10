@@ -22,8 +22,9 @@ public abstract class NetworkApi {
     public NetworkApi() {
         if (isDebug) {
             baseUrl = getTest();
+        }else {
+            baseUrl = getNormal();
         }
-        baseUrl = getNormal();
     }
 
     abstract String getTest();

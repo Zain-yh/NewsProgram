@@ -1,6 +1,5 @@
 package com.example.news.newslist;
 
-import android.content.Context;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -11,7 +10,9 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import com.example.base.mvvm.model.BaseMvvmModel;
 import com.example.base.mvvm.model.IBaseModelListener;
+import com.example.base.mvvm.model.LoadResult;
 import com.example.news.R;
 import com.example.base.customview.BaseCustomViewModel;
 import com.example.base.customview.LazyFragment;
@@ -62,27 +63,30 @@ public class NewsFragment extends LazyFragment implements IBaseModelListener<Lis
         refreshLayout.setOnRefreshListener(new OnRefreshListener() {
             @Override
             public void onRefresh(@NonNull RefreshLayout refreshLayout) {
-                newsListModel.load(false);
+                newsListModel.refresh();
             }
         });
         refreshLayout.setOnLoadMoreListener(new OnLoadMoreListener() {
             @Override
             public void onLoadMore(@NonNull RefreshLayout refreshLayout) {
-                newsListModel.load(true);
+                newsListModel.loadMore();
             }
         });
-        newsListModel = new NewsListModel(this, mChannel);
+        newsListModel = new NewsListModel(mChannel);
+        newsListModel.register(this);
         return view;
     }
 
     @Override
     public void lazyInit() {
-        newsListModel.load(false);
+        newsListModel.refresh();
     }
 
     @Override
-    public void onLoadSuccess(List<BaseCustomViewModel> viewModels, boolean isLoadMore) {
-        if (!isLoadMore) newsList.clear();
+    public void onLoadSuccess(BaseMvvmModel mvvmModel, List<BaseCustomViewModel> viewModels, LoadResult result) {
+        if (!result.isLoadMore) newsList.clear();
+        if (!result.hasNext) refreshLayout.setEnableLoadMore(false);
+        refreshLayout.setEnableLoadMore(true);
         newsList.addAll(viewModels);
         newsListAdapter.setData(newsList);
         refreshLayout.finishRefresh(true);
@@ -90,7 +94,7 @@ public class NewsFragment extends LazyFragment implements IBaseModelListener<Lis
     }
 
     @Override
-    public void onLoadFailed(String message) {
+    public void onLoadFailed(BaseMvvmModel mvvmModel, String message) {
         Toast.makeText(getContext(), message, Toast.LENGTH_LONG).show();
         Log.d(TAG, "onFailure: " + message);
         refreshLayout.finishRefresh(false);
