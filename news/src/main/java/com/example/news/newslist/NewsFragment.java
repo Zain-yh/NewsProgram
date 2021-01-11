@@ -8,11 +8,13 @@ import android.view.ViewGroup;
 import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.lifecycle.Observer;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import com.example.base.mvvm.model.BaseMvvmModel;
 import com.example.base.mvvm.model.IBaseModelListener;
 import com.example.base.mvvm.model.LoadResult;
+import com.example.base.mvvm.viewmodel.ViewStatus;
 import com.example.news.R;
 import com.example.base.customview.BaseCustomViewModel;
 import com.example.base.customview.LazyFragment;
@@ -24,14 +26,14 @@ import java.util.ArrayList;
 import java.util.List;
 
 
-public class NewsFragment extends LazyFragment implements IBaseModelListener<List<BaseCustomViewModel>> {
+public class NewsFragment extends LazyFragment implements Observer{
 
     private String mChannel;
     private RecyclerView recyclerView;
     private NewsListAdapter newsListAdapter;
     private List<BaseCustomViewModel> newsList = new ArrayList<>();
     private SmartRefreshLayout refreshLayout;
-    NewsListModel newsListModel;
+    NewsListViewModel newsListViewModel;
 
     //由于fragment不能自定义构造函数，使用bundle传值
     public static NewsFragment getInstance(String channel) {
@@ -63,41 +65,62 @@ public class NewsFragment extends LazyFragment implements IBaseModelListener<Lis
         refreshLayout.setOnRefreshListener(new OnRefreshListener() {
             @Override
             public void onRefresh(@NonNull RefreshLayout refreshLayout) {
-                newsListModel.refresh();
+                newsListViewModel.refresh();
             }
         });
         refreshLayout.setOnLoadMoreListener(new OnLoadMoreListener() {
             @Override
             public void onLoadMore(@NonNull RefreshLayout refreshLayout) {
-                newsListModel.loadMore();
+                newsListViewModel.loadMore();
             }
         });
-        newsListModel = new NewsListModel(mChannel);
-        newsListModel.register(this);
+        newsListViewModel = new NewsListViewModel(mChannel);
+        initLiveData();
         return view;
+    }
+
+    private void initLiveData() {
+        newsListViewModel.dataList.observe(this, this);
+        newsListViewModel.viewStatus.observe(this, new Observer<ViewStatus>() {
+            @Override
+            public void onChanged(ViewStatus viewStatus) {
+                switch (viewStatus){
+                    case EMPTY:
+                        break;
+                    case LOADING:
+                        refreshLayout.setEnableLoadMore(true);
+                        break;
+                    case NO_MORE_DATA:
+                        Toast.makeText(getContext(), "没有更多了!!", Toast.LENGTH_LONG).show();
+                        refreshLayout.setEnableLoadMore(false);
+                        break;
+                    case SHOW_CONTENT:
+                        Toast.makeText(getContext(), "加载成功!!", Toast.LENGTH_LONG).show();
+                        break;
+                    case REFRESH_ERROR:
+                        break;
+                    case LOAD_MORE_FAILED:
+                        break;
+                }
+            }
+        });
+        newsListViewModel.errorMessage.observe(this, new Observer<String>() {
+            @Override
+            public void onChanged(String errorMessage) {
+                Log.d(TAG, "onFailure: " + errorMessage);
+            }
+        });
     }
 
     @Override
     public void lazyInit() {
-        newsListModel.refresh();
+        newsListViewModel.refresh();
     }
 
     @Override
-    public void onLoadSuccess(BaseMvvmModel mvvmModel, List<BaseCustomViewModel> viewModels, LoadResult result) {
-        if (!result.isLoadMore) newsList.clear();
-        if (!result.hasNext) refreshLayout.setEnableLoadMore(false);
-        refreshLayout.setEnableLoadMore(true);
-        newsList.addAll(viewModels);
-        newsListAdapter.setData(newsList);
+    public void onChanged(Object o) {
         refreshLayout.finishRefresh(true);
         refreshLayout.finishLoadMore(true);
-    }
-
-    @Override
-    public void onLoadFailed(BaseMvvmModel mvvmModel, String message) {
-        Toast.makeText(getContext(), message, Toast.LENGTH_LONG).show();
-        Log.d(TAG, "onFailure: " + message);
-        refreshLayout.finishRefresh(false);
-        refreshLayout.finishLoadMore(false);
+        newsListAdapter.setData((List<BaseCustomViewModel>) o);
     }
 }
